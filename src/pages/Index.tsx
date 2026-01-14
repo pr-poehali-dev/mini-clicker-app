@@ -67,7 +67,7 @@ const Index = () => {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).Adsgram) {
-      const AdController = (window as any).Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
+      const AdController = (window as any).Adsgram.init({ blockId: "21002" });
       setAdsgramController(AdController);
     }
   }, []);
