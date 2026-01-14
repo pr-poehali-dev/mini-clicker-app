@@ -429,30 +429,30 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="main" className="space-y-4 sm:space-y-6">
-            <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 border-primary/20">
-              <div className="flex justify-between items-center mb-4">
+          <TabsContent value="main" className="space-y-3 sm:space-y-6">
+            <Card className="p-3 sm:p-6 bg-gradient-to-br from-card to-card/50 border-2 border-primary/20">
+              <div className="flex justify-between items-center mb-2 sm:mb-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Прогресс уровня {gameState.level}</p>
-                  <Badge variant="secondary" className="text-xl px-4 py-2 mt-2">
-                    <Icon name="TrendingUp" size={20} className="mr-2" />
+                  <p className="text-xs sm:text-sm text-muted-foreground">Прогресс уровня {gameState.level}</p>
+                  <Badge variant="secondary" className="text-sm sm:text-xl px-2 py-1 sm:px-4 sm:py-2 mt-1 sm:mt-2">
+                    <Icon name="TrendingUp" size={14} className="mr-1 sm:mr-2 sm:w-5 sm:h-5" />
                     +{gameState.clickPower}/клик
                   </Badge>
                 </div>
               </div>
               
               <div className="mb-2">
-                <div className="flex justify-between text-sm mb-1">
+                <div className="flex justify-between text-xs sm:text-sm mb-1">
                   <span>До следующего уровня</span>
                   <span className="font-bold">{nextLevelCoins()}</span>
                 </div>
-                <Progress value={currentLevelProgress()} className="h-3" />
+                <Progress value={currentLevelProgress()} className="h-2 sm:h-3" />
               </div>
               
               {gameState.autoClickPower > 0 && (
-                <div className="flex items-center gap-2 text-accent mt-3">
-                  <Icon name="Repeat" size={18} />
-                  <span className="font-semibold">+{gameState.autoClickPower}/сек автодоход</span>
+                <div className="flex items-center gap-1 sm:gap-2 text-accent mt-2 sm:mt-3">
+                  <Icon name="Repeat" size={14} className="sm:w-[18px] sm:h-[18px]" />
+                  <span className="text-xs sm:text-base font-semibold">+{gameState.autoClickPower}/сек автодоход</span>
                 </div>
               )}
             </Card>
@@ -462,7 +462,7 @@ const Index = () => {
                 onClick={handleClick}
                 onTouchStart={handleClick}
                 size="lg"
-                className={`w-64 h-64 sm:w-80 sm:h-80 rounded-full p-0 bg-transparent active:scale-95 sm:hover:scale-105 transition-all duration-200 border-0 shadow-2xl shadow-yellow-500/50 relative overflow-visible ${
+                className={`w-48 h-48 sm:w-80 sm:h-80 rounded-full p-0 bg-transparent active:scale-95 sm:hover:scale-105 transition-all duration-200 border-0 shadow-2xl shadow-yellow-500/50 relative overflow-visible ${
                   clickAnimation ? 'click-animation' : ''
                 }`}
                 style={{ 
@@ -502,21 +502,21 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              <Card className="p-2 sm:p-4 text-center bg-gradient-to-br from-primary/10 to-transparent">
-                <Icon name="MousePointer" size={24} className="mx-auto mb-1 sm:mb-2 text-primary sm:w-8 sm:h-8" />
-                <p className="text-lg sm:text-2xl font-bold">{gameState.clickPower}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Сила</p>
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
+              <Card className="p-1.5 sm:p-4 text-center bg-gradient-to-br from-primary/10 to-transparent">
+                <Icon name="MousePointer" size={16} className="mx-auto mb-0.5 sm:mb-2 text-primary sm:w-8 sm:h-8" />
+                <p className="text-sm sm:text-2xl font-bold">{gameState.clickPower}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Сила</p>
               </Card>
-              <Card className="p-2 sm:p-4 text-center bg-gradient-to-br from-secondary/10 to-transparent">
-                <Icon name="Zap" size={24} className="mx-auto mb-1 sm:mb-2 text-secondary sm:w-8 sm:h-8" />
-                <p className="text-lg sm:text-2xl font-bold">{gameState.autoClickPower}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Авто/сек</p>
+              <Card className="p-1.5 sm:p-4 text-center bg-gradient-to-br from-secondary/10 to-transparent">
+                <Icon name="Zap" size={16} className="mx-auto mb-0.5 sm:mb-2 text-secondary sm:w-8 sm:h-8" />
+                <p className="text-sm sm:text-2xl font-bold">{gameState.autoClickPower}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Авто/сек</p>
               </Card>
-              <Card className="p-2 sm:p-4 text-center bg-gradient-to-br from-accent/10 to-transparent">
-                <Icon name="Trophy" size={24} className="mx-auto mb-1 sm:mb-2 text-accent sm:w-8 sm:h-8" />
-                <p className="text-lg sm:text-2xl font-bold">{gameState.level}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Уровень</p>
+              <Card className="p-1.5 sm:p-4 text-center bg-gradient-to-br from-accent/10 to-transparent">
+                <Icon name="Trophy" size={16} className="mx-auto mb-0.5 sm:mb-2 text-accent sm:w-8 sm:h-8" />
+                <p className="text-sm sm:text-2xl font-bold">{gameState.level}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Уровень</p>
               </Card>
             </div>
           </TabsContent>
