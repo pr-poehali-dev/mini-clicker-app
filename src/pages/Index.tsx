@@ -231,8 +231,6 @@ const Index = () => {
       y = e.clientY - rect.top;
     }
     
-    const effectivePower = boostActive ? Math.floor(gameState.clickPower * 1.5) : gameState.clickPower;
-    
     const newNumber = {
       id: Date.now() + Math.random(),
       value: effectivePower,
