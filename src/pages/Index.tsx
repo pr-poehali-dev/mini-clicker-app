@@ -315,16 +315,16 @@ const Index = () => {
                   touchAction: 'manipulation'
                 }}
               >
-                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                <div className="w-full h-full rounded-full flex items-center justify-center">
                   <img 
-                    src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.jpg"
+                    src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
                     alt="Ruble Coin"
-                    className="w-[85%] h-[85%] object-contain drop-shadow-2xl"
+                    className="w-full h-full object-contain drop-shadow-2xl"
                     draggable={false}
                     style={{
-                      clipPath: 'circle(45% at 50% 50%)',
                       WebkitUserSelect: 'none',
-                      userSelect: 'none'
+                      userSelect: 'none',
+                      filter: 'drop-shadow(0 20px 40px rgba(234, 179, 8, 0.5))'
                     }}
                   />
                 </div>
