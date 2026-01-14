@@ -58,10 +58,19 @@ const Index = () => {
   const [rocketPosition, setRocketPosition] = useState({ x: 0, y: 0 });
   const [boostActive, setBoostActive] = useState(false);
   const [boostTimeLeft, setBoostTimeLeft] = useState(0);
+  const [adsgramController, setAdsgramController] = useState<any>(null);
+  const [gamePaused, setGamePaused] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('clickerGame', JSON.stringify(gameState));
   }, [gameState]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).Adsgram) {
+      const AdController = (window as any).Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
+      setAdsgramController(AdController);
+    }
+  }, []);
 
   useEffect(() => {
     let timeoutId: number;
@@ -198,24 +207,49 @@ const Index = () => {
     }
   }, [gameState.coins]);
 
+  const showRewardedAd = (rewardCallback: () => void) => {
+    if (adsgramController) {
+      setGamePaused(true);
+      adsgramController.show().then(() => {
+        rewardCallback();
+        setGamePaused(false);
+      }).catch((error: any) => {
+        console.log('Реклама не показана:', error);
+        setGamePaused(false);
+        toast({
+          title: "❌ Ошибка",
+          description: "Не удалось загрузить рекламу",
+          variant: "destructive"
+        });
+      });
+    } else {
+      rewardCallback();
+    }
+  };
+
   const catchRocket = () => {
-    if (rocketVisible) {
+    if (rocketVisible && !gamePaused) {
       setRocketVisible(false);
-      setBoostActive(true);
-      setBoostTimeLeft(15);
       
-      if ('vibrate' in navigator) {
-        navigator.vibrate([100, 50, 100]);
-      }
-      
-      toast({
-        title: "🚀 Ракета поймана!",
-        description: "Сила клика увеличена на 50% на 15 секунд!",
+      showRewardedAd(() => {
+        setBoostActive(true);
+        setBoostTimeLeft(15);
+        
+        if ('vibrate' in navigator) {
+          navigator.vibrate([100, 50, 100]);
+        }
+        
+        toast({
+          title: "🚀 Буст активирован!",
+          description: "Сила клика увеличена на 50% на 15 секунд!",
+        });
       });
     }
   };
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
+    if (gamePaused) return;
+    
     const effectivePower = boostActive ? Math.floor(gameState.clickPower * 1.5) : gameState.clickPower;
     
     setGameState(prev => ({
@@ -260,7 +294,29 @@ const Index = () => {
   };
 
   const buyBoost = (boostType: keyof GameState['boosts']) => {
+    if (gamePaused) return;
+    
     const boost = gameState.boosts[boostType];
+    
+    if (boostType === 'passiveIncome') {
+      showRewardedAd(() => {
+        const newLevel = boost.level + 1;
+        const newCost = Math.floor(boost.cost * 1.5);
+        
+        setGameState(prev => {
+          const updated = { ...prev };
+          updated.boosts[boostType] = { level: newLevel, cost: newCost };
+          updated.autoClickPower += newLevel * 5;
+          return updated;
+        });
+        
+        toast({
+          title: "✅ Пассивный доход получен!",
+          description: `Уровень: ${newLevel}. +${newLevel * 5}/сек`,
+        });
+      });
+      return;
+    }
     
     if (gameState.coins >= boost.cost) {
       const newLevel = boost.level + 1;
@@ -275,8 +331,6 @@ const Index = () => {
           updated.clickPower = 1 + newLevel;
         } else if (boostType === 'autoClicker') {
           updated.autoClickPower = newLevel * 2;
-        } else if (boostType === 'passiveIncome') {
-          updated.autoClickPower += newLevel * 5;
         }
         
         return updated;
@@ -534,8 +588,8 @@ const Index = () => {
                   size="lg"
                   className="bg-accent hover:bg-accent/90"
                 >
-                  <Icon name="Coins" size={20} className="mr-2" />
-                  {gameState.boosts.passiveIncome.cost}
+                  <Icon name="Video" size={20} className="mr-2" />
+                  Смотреть рекламу
                 </Button>
               </div>
             </Card>
@@ -636,9 +690,17 @@ const Index = () => {
                       <span className="text-lg">{gameState.dailyStreak === 1 ? 'день' : gameState.dailyStreak < 5 ? 'дня' : 'дней'}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-white/70">Следующая награда</p>
-                    <p className="text-2xl font-bold">{50 + gameState.dailyStreak * 20} 🪙</p>
+                  <div className="text-right flex flex-col items-end">
+                    <p className="text-sm text-white/70 mb-2">Следующая награда</p>
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                        alt="Coin"
+                        className="w-8 h-8 object-contain"
+                        draggable={false}
+                      />
+                      <p className="text-2xl font-bold">{50 + gameState.dailyStreak * 20}</p>
+                    </div>
                   </div>
                 </div>
                 
@@ -671,7 +733,15 @@ const Index = () => {
                     }`}
                   >
                     <p className="text-xs mb-1">День {day}</p>
-                    <p className="text-lg font-bold">{50 + (day - 1) * 20}</p>
+                    <div className="flex items-center justify-center gap-1">
+                      <img 
+                        src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                        alt="Coin"
+                        className="w-4 h-4 object-contain"
+                        draggable={false}
+                      />
+                      <p className="text-sm font-bold">{50 + (day - 1) * 20}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -687,7 +757,12 @@ const Index = () => {
                   gameState.coins >= 100 ? 'bg-primary/20 border-2 border-primary' : 'bg-muted/10'
                 }`}>
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">💰</span>
+                    <img 
+                      src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                      alt="Coin"
+                      className="w-12 h-12 object-contain"
+                      draggable={false}
+                    />
                     <div>
                       <p className="font-bold">Первая сотня</p>
                       <p className="text-sm text-muted-foreground">Заработай 100 монет</p>
@@ -705,7 +780,12 @@ const Index = () => {
                   gameState.dailyStreak >= 3 ? 'bg-secondary/20 border-2 border-secondary' : 'bg-muted/10'
                 }`}>
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">🔥</span>
+                    <img 
+                      src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                      alt="Coin"
+                      className="w-12 h-12 object-contain"
+                      draggable={false}
+                    />
                     <div>
                       <p className="font-bold">Упорство</p>
                       <p className="text-sm text-muted-foreground">3 дня подряд</p>
@@ -723,7 +803,12 @@ const Index = () => {
                   gameState.dailyStreak >= 7 ? 'bg-accent/20 border-2 border-accent' : 'bg-muted/10'
                 }`}>
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">⭐</span>
+                    <img 
+                      src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                      alt="Coin"
+                      className="w-12 h-12 object-contain"
+                      draggable={false}
+                    />
                     <div>
                       <p className="font-bold">Легенда</p>
                       <p className="text-sm text-muted-foreground">7 дней подряд</p>
