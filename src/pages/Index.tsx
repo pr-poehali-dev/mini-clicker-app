@@ -68,7 +68,7 @@ const Index = () => {
     let animationFrameId: number;
     
     const spawnRocket = () => {
-      const randomDelay = Math.random() * 10000 + 5000;
+      const randomDelay = Math.random() * 25 * 60000 + 5 * 60000;
       timeoutId = window.setTimeout(() => {
         if (!boostActive) {
           const startX = Math.random() * (window.innerWidth - 100);
@@ -321,8 +321,13 @@ const Index = () => {
         <Card className={`p-3 sm:p-4 mb-4 sm:mb-6 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 border-2 ${coinPulse ? 'coin-pulse' : ''}`}>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center text-xl sm:text-2xl">
-                🪙
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex items-center justify-center">
+                <img 
+                  src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                  alt="Ruble Coin"
+                  className="w-full h-full object-contain"
+                  draggable={false}
+                />
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-muted-foreground">Ваш баланс</p>
