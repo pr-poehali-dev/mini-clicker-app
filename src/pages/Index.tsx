@@ -54,10 +54,71 @@ const Index = () => {
   const [dailyRewardAmount, setDailyRewardAmount] = useState(0);
   const [coinPulse, setCoinPulse] = useState(false);
   const [floatingNumbers, setFloatingNumbers] = useState<Array<{ id: number; value: number; x: number; y: number }>>([]);
+  const [rocketVisible, setRocketVisible] = useState(false);
+  const [rocketPosition, setRocketPosition] = useState({ x: 0, y: 0 });
+  const [boostActive, setBoostActive] = useState(false);
+  const [boostTimeLeft, setBoostTimeLeft] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('clickerGame', JSON.stringify(gameState));
   }, [gameState]);
+
+  useEffect(() => {
+    const spawnRocket = () => {
+      const randomDelay = Math.random() * 30000 + 20000;
+      setTimeout(() => {
+        if (!boostActive) {
+          const startX = Math.random() * (window.innerWidth - 100);
+          const startY = window.innerHeight + 100;
+          setRocketPosition({ x: startX, y: startY });
+          setRocketVisible(true);
+          
+          const flyDuration = 5000;
+          const startTime = Date.now();
+          
+          const animateRocket = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = elapsed / flyDuration;
+            
+            if (progress < 1 && rocketVisible) {
+              const newY = startY - (window.innerHeight + 200) * progress;
+              const wobble = Math.sin(progress * 10) * 30;
+              setRocketPosition({ x: startX + wobble, y: newY });
+              requestAnimationFrame(animateRocket);
+            } else {
+              setRocketVisible(false);
+              spawnRocket();
+            }
+          };
+          
+          animateRocket();
+        } else {
+          spawnRocket();
+        }
+      }, randomDelay);
+    };
+    
+    spawnRocket();
+  }, [boostActive]);
+
+  useEffect(() => {
+    if (boostActive && boostTimeLeft > 0) {
+      const timer = setInterval(() => {
+        setBoostTimeLeft(prev => {
+          if (prev <= 1) {
+            setBoostActive(false);
+            toast({
+              title: "⏱️ Буст закончился",
+              description: "Ловите следующую ракету для нового буста!",
+            });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [boostActive, boostTimeLeft]);
 
   useEffect(() => {
     const today = new Date().toDateString();
@@ -128,10 +189,29 @@ const Index = () => {
     }
   }, [gameState.coins]);
 
+  const catchRocket = () => {
+    if (rocketVisible) {
+      setRocketVisible(false);
+      setBoostActive(true);
+      setBoostTimeLeft(15);
+      
+      if ('vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100]);
+      }
+      
+      toast({
+        title: "🚀 Ракета поймана!",
+        description: "Сила клика увеличена на 50% на 15 секунд!",
+      });
+    }
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
+    const effectivePower = boostActive ? Math.floor(gameState.clickPower * 1.5) : gameState.clickPower;
+    
     setGameState(prev => ({
       ...prev,
-      coins: prev.coins + prev.clickPower
+      coins: prev.coins + effectivePower
     }));
     setClickAnimation(true);
     setCoinPulse(true);
@@ -151,9 +231,11 @@ const Index = () => {
       y = e.clientY - rect.top;
     }
     
+    const effectivePower = boostActive ? Math.floor(gameState.clickPower * 1.5) : gameState.clickPower;
+    
     const newNumber = {
       id: Date.now() + Math.random(),
-      value: gameState.clickPower,
+      value: effectivePower,
       x,
       y
     };
@@ -241,10 +323,18 @@ const Index = () => {
               </div>
             </div>
             <div className="text-right">
-              <Badge variant="outline" className="mb-1 sm:mb-2 text-xs sm:text-sm">
-                <Icon name="Flame" size={12} className="mr-1 text-accent sm:w-3.5 sm:h-3.5" />
-                {gameState.dailyStreak}
-              </Badge>
+              {boostActive && (
+                <Badge className="mb-1 sm:mb-2 text-xs sm:text-sm bg-accent animate-pulse">
+                  <Icon name="Rocket" size={12} className="mr-1 sm:w-3.5 sm:h-3.5" />
+                  🚀 {boostTimeLeft}с
+                </Badge>
+              )}
+              {!boostActive && (
+                <Badge variant="outline" className="mb-1 sm:mb-2 text-xs sm:text-sm">
+                  <Icon name="Flame" size={12} className="mr-1 text-accent sm:w-3.5 sm:h-3.5" />
+                  {gameState.dailyStreak}
+                </Badge>
+              )}
               <p className="text-xs sm:text-sm text-muted-foreground">Ур. {gameState.level}</p>
             </div>
           </div>
@@ -319,12 +409,14 @@ const Index = () => {
                   <img 
                     src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
                     alt="Ruble Coin"
-                    className="w-full h-full object-contain drop-shadow-2xl"
+                    className={`w-full h-full object-contain drop-shadow-2xl ${boostActive ? 'rocket-boost-active' : ''}`}
                     draggable={false}
                     style={{
                       WebkitUserSelect: 'none',
                       userSelect: 'none',
-                      filter: 'drop-shadow(0 20px 40px rgba(234, 179, 8, 0.5))'
+                      filter: boostActive 
+                        ? 'drop-shadow(0 20px 40px rgba(251, 146, 60, 0.8)) brightness(1.3)' 
+                        : 'drop-shadow(0 20px 40px rgba(234, 179, 8, 0.5))'
                     }}
                   />
                 </div>
@@ -636,6 +728,30 @@ const Index = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {rocketVisible && (
+          <div
+            onClick={catchRocket}
+            onTouchStart={catchRocket}
+            className="fixed cursor-pointer z-50 animate-pulse"
+            style={{
+              left: `${rocketPosition.x}px`,
+              top: `${rocketPosition.y}px`,
+              transform: 'translate(-50%, -50%)',
+              transition: 'none',
+              pointerEvents: 'auto'
+            }}
+          >
+            <div className="relative">
+              <div className="text-6xl sm:text-7xl drop-shadow-2xl" style={{ filter: 'drop-shadow(0 0 20px rgba(251, 146, 60, 0.8))' }}>
+                🚀
+              </div>
+              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap animate-bounce">
+                +50% на 15с!
+              </div>
+            </div>
+          </div>
+        )}
 
         <Dialog open={showDailyReward} onOpenChange={setShowDailyReward}>
           <DialogContent className="max-w-md">
