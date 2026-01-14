@@ -64,9 +64,12 @@ const Index = () => {
   }, [gameState]);
 
   useEffect(() => {
+    let timeoutId: number;
+    let animationFrameId: number;
+    
     const spawnRocket = () => {
-      const randomDelay = Math.random() * 30000 + 20000;
-      setTimeout(() => {
+      const randomDelay = Math.random() * 10000 + 5000;
+      timeoutId = window.setTimeout(() => {
         if (!boostActive) {
           const startX = Math.random() * (window.innerWidth - 100);
           const startY = window.innerHeight + 100;
@@ -75,16 +78,17 @@ const Index = () => {
           
           const flyDuration = 5000;
           const startTime = Date.now();
+          const isFlying = true;
           
           const animateRocket = () => {
             const elapsed = Date.now() - startTime;
             const progress = elapsed / flyDuration;
             
-            if (progress < 1 && rocketVisible) {
+            if (progress < 1 && isFlying) {
               const newY = startY - (window.innerHeight + 200) * progress;
               const wobble = Math.sin(progress * 10) * 30;
               setRocketPosition({ x: startX + wobble, y: newY });
-              requestAnimationFrame(animateRocket);
+              animationFrameId = requestAnimationFrame(animateRocket);
             } else {
               setRocketVisible(false);
               spawnRocket();
@@ -99,6 +103,11 @@ const Index = () => {
     };
     
     spawnRocket();
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
   }, [boostActive]);
 
   useEffect(() => {
