@@ -6,12 +6,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface GameState {
   coins: number;
   clickPower: number;
   autoClickPower: number;
   level: number;
+  lastDailyReward: string | null;
+  dailyStreak: number;
   boosts: {
     clickMultiplier: { level: number; cost: number };
     autoClicker: { level: number; cost: number };
@@ -30,6 +39,8 @@ const Index = () => {
       clickPower: 1,
       autoClickPower: 0,
       level: 1,
+      lastDailyReward: null,
+      dailyStreak: 0,
       boosts: {
         clickMultiplier: { level: 0, cost: 50 },
         autoClicker: { level: 0, cost: 100 },
@@ -39,10 +50,57 @@ const Index = () => {
   });
 
   const [clickAnimation, setClickAnimation] = useState(false);
+  const [showDailyReward, setShowDailyReward] = useState(false);
+  const [dailyRewardAmount, setDailyRewardAmount] = useState(0);
+  const [coinPulse, setCoinPulse] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('clickerGame', JSON.stringify(gameState));
   }, [gameState]);
+
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const lastReward = gameState.lastDailyReward;
+    
+    if (!lastReward || lastReward !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isConsecutive = lastReward === yesterday.toDateString();
+      
+      const newStreak = isConsecutive ? gameState.dailyStreak + 1 : 1;
+      const baseReward = 50;
+      const streakBonus = (newStreak - 1) * 20;
+      const totalReward = baseReward + streakBonus;
+      
+      setDailyRewardAmount(totalReward);
+      setShowDailyReward(true);
+    }
+  }, []);
+
+  const claimDailyReward = () => {
+    const today = new Date().toDateString();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isConsecutive = gameState.lastDailyReward === yesterday.toDateString();
+    
+    const newStreak = isConsecutive ? gameState.dailyStreak + 1 : 1;
+    
+    setGameState(prev => ({
+      ...prev,
+      coins: prev.coins + dailyRewardAmount,
+      lastDailyReward: today,
+      dailyStreak: newStreak
+    }));
+    
+    setShowDailyReward(false);
+    setCoinPulse(true);
+    setTimeout(() => setCoinPulse(false), 300);
+    
+    toast({
+      title: "🎁 Ежедневная награда получена!",
+      description: `+${dailyRewardAmount} монет! Серия: ${newStreak} ${newStreak === 1 ? 'день' : newStreak < 5 ? 'дня' : 'дней'}`,
+    });
+  };
 
   useEffect(() => {
     if (gameState.autoClickPower > 0) {
@@ -75,7 +133,11 @@ const Index = () => {
       coins: prev.coins + prev.clickPower
     }));
     setClickAnimation(true);
-    setTimeout(() => setClickAnimation(false), 200);
+    setCoinPulse(true);
+    setTimeout(() => {
+      setClickAnimation(false);
+      setCoinPulse(false);
+    }, 200);
   };
 
   const buyBoost = (boostType: keyof GameState['boosts']) => {
@@ -130,15 +192,36 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/20 p-4">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8 text-center pt-6">
+        <header className="mb-6 text-center pt-6">
           <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mb-2">
             🪙 MEGA CLICKER
           </h1>
           <p className="text-muted-foreground text-lg">Кликай, прокачивайся, зарабатывай!</p>
         </header>
 
+        <Card className={`p-4 mb-6 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 border-2 ${coinPulse ? 'coin-pulse' : ''}`}>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-2xl">
+                🪙
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Ваш баланс</p>
+                <h2 className="text-3xl font-black text-foreground">{gameState.coins.toLocaleString()}</h2>
+              </div>
+            </div>
+            <div className="text-right">
+              <Badge variant="outline" className="mb-2">
+                <Icon name="Flame" size={14} className="mr-1 text-accent" />
+                Серия: {gameState.dailyStreak}
+              </Badge>
+              <p className="text-sm text-muted-foreground">Уровень {gameState.level}</p>
+            </div>
+          </div>
+        </Card>
+
         <Tabs defaultValue="main" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="main" className="text-base">
               <Icon name="Home" size={18} className="mr-2" />
               Главная
@@ -151,20 +234,22 @@ const Index = () => {
               <Icon name="Zap" size={18} className="mr-2" />
               Бусты
             </TabsTrigger>
+            <TabsTrigger value="rewards" className="text-base">
+              <Icon name="Gift" size={18} className="mr-2" />
+              Награды
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="main" className="space-y-6">
             <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 border-primary/20">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Уровень {gameState.level}</p>
-                  <h2 className="text-4xl font-black text-primary">{gameState.coins.toLocaleString()}</h2>
-                  <p className="text-muted-foreground">монет</p>
+                  <p className="text-sm text-muted-foreground">Прогресс уровня {gameState.level}</p>
+                  <Badge variant="secondary" className="text-xl px-4 py-2 mt-2">
+                    <Icon name="TrendingUp" size={20} className="mr-2" />
+                    +{gameState.clickPower}/клик
+                  </Badge>
                 </div>
-                <Badge variant="secondary" className="text-xl px-4 py-2">
-                  <Icon name="TrendingUp" size={20} className="mr-2" />
-                  +{gameState.clickPower}/клик
-                </Badge>
               </div>
               
               <div className="mb-2">
@@ -364,7 +449,173 @@ const Index = () => {
               </div>
             </Card>
           </TabsContent>
+
+          <TabsContent value="rewards" className="space-y-4">
+            <Card className="p-6 bg-gradient-to-br from-primary via-secondary to-accent text-white">
+              <div className="text-center mb-6">
+                <div className="text-6xl mb-4">🎁</div>
+                <h3 className="text-3xl font-black mb-2">Ежедневные награды</h3>
+                <p className="text-white/90">Заходи каждый день и получай бонусы!</p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="text-sm text-white/70">Текущая серия</p>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Flame" size={28} className="text-accent" />
+                      <span className="text-4xl font-black">{gameState.dailyStreak}</span>
+                      <span className="text-lg">{gameState.dailyStreak === 1 ? 'день' : gameState.dailyStreak < 5 ? 'дня' : 'дней'}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-white/70">Следующая награда</p>
+                    <p className="text-2xl font-bold">{50 + gameState.dailyStreak * 20} 🪙</p>
+                  </div>
+                </div>
+                
+                {gameState.lastDailyReward === new Date().toDateString() ? (
+                  <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-center">
+                    <Icon name="CheckCircle" size={32} className="mx-auto mb-2 text-green-400" />
+                    <p className="font-bold">Награда за сегодня получена!</p>
+                    <p className="text-sm text-white/70">Возвращайся завтра за новой наградой</p>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => setShowDailyReward(true)}
+                    size="lg" 
+                    className="w-full bg-white text-primary hover:bg-white/90 font-bold text-lg"
+                  >
+                    <Icon name="Gift" size={24} className="mr-2" />
+                    Получить награду
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                  <div 
+                    key={day}
+                    className={`p-3 rounded-lg text-center ${
+                      day <= gameState.dailyStreak 
+                        ? 'bg-white/20 border-2 border-white/50' 
+                        : 'bg-white/5 border-2 border-white/10'
+                    }`}
+                  >
+                    <p className="text-xs mb-1">День {day}</p>
+                    <p className="text-lg font-bold">{50 + (day - 1) * 20}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-br from-card to-card/50">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Icon name="Star" size={24} className="text-accent" />
+                Бонусы за достижения
+              </h3>
+              <div className="space-y-3">
+                <div className={`p-4 rounded-lg flex justify-between items-center ${
+                  gameState.coins >= 100 ? 'bg-primary/20 border-2 border-primary' : 'bg-muted/10'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">💰</span>
+                    <div>
+                      <p className="font-bold">Первая сотня</p>
+                      <p className="text-sm text-muted-foreground">Заработай 100 монет</p>
+                    </div>
+                  </div>
+                  {gameState.coins >= 100 && (
+                    <Badge variant="default" className="bg-primary">
+                      <Icon name="Check" size={16} className="mr-1" />
+                      Выполнено
+                    </Badge>
+                  )}
+                </div>
+
+                <div className={`p-4 rounded-lg flex justify-between items-center ${
+                  gameState.dailyStreak >= 3 ? 'bg-secondary/20 border-2 border-secondary' : 'bg-muted/10'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">🔥</span>
+                    <div>
+                      <p className="font-bold">Упорство</p>
+                      <p className="text-sm text-muted-foreground">3 дня подряд</p>
+                    </div>
+                  </div>
+                  {gameState.dailyStreak >= 3 && (
+                    <Badge variant="default" className="bg-secondary">
+                      <Icon name="Check" size={16} className="mr-1" />
+                      Выполнено
+                    </Badge>
+                  )}
+                </div>
+
+                <div className={`p-4 rounded-lg flex justify-between items-center ${
+                  gameState.dailyStreak >= 7 ? 'bg-accent/20 border-2 border-accent' : 'bg-muted/10'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">⭐</span>
+                    <div>
+                      <p className="font-bold">Легенда</p>
+                      <p className="text-sm text-muted-foreground">7 дней подряд</p>
+                    </div>
+                  </div>
+                  {gameState.dailyStreak >= 7 && (
+                    <Badge variant="default" className="bg-accent">
+                      <Icon name="Check" size={16} className="mr-1" />
+                      Выполнено
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        <Dialog open={showDailyReward} onOpenChange={setShowDailyReward}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-black text-center mb-4">
+                🎉 Ежедневная награда!
+              </DialogTitle>
+              <DialogDescription className="text-center space-y-6">
+                <div className="bg-gradient-to-br from-primary via-secondary to-accent p-8 rounded-2xl">
+                  <div className="text-7xl mb-4">🪙</div>
+                  <p className="text-5xl font-black text-white mb-2">
+                    +{dailyRewardAmount}
+                  </p>
+                  <p className="text-white/90 text-lg">монет</p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-2 text-lg">
+                  <Icon name="Flame" size={24} className="text-accent" />
+                  <span className="font-bold">
+                    Серия: {gameState.lastDailyReward ? 
+                      (new Date().toDateString() === new Date(new Date(gameState.lastDailyReward).getTime() + 86400000).toDateString() 
+                        ? gameState.dailyStreak + 1 
+                        : 1)
+                      : 1} 
+                    {gameState.dailyStreak + 1 === 1 ? ' день' : gameState.dailyStreak + 1 < 5 ? ' дня' : ' дней'}
+                  </span>
+                </div>
+
+                <p className="text-muted-foreground">
+                  Заходи каждый день, чтобы увеличить серию и получать больше монет!
+                </p>
+
+                <Button 
+                  onClick={claimDailyReward}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-primary via-secondary to-accent hover:opacity-90 text-white font-bold text-lg"
+                >
+                  <Icon name="Gift" size={24} className="mr-2" />
+                  Забрать награду
+                </Button>
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
