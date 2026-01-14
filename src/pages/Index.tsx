@@ -21,6 +21,8 @@ interface GameState {
   level: number;
   lastDailyReward: string | null;
   dailyStreak: number;
+  referralsCount: number;
+  userId: string;
   boosts: {
     clickMultiplier: { level: number; cost: number };
     autoClicker: { level: number; cost: number };
@@ -34,19 +36,33 @@ const Index = () => {
   const { toast } = useToast();
   const [gameState, setGameState] = useState<GameState>(() => {
     const saved = localStorage.getItem('clickerGame');
-    return saved ? JSON.parse(saved) : {
+    const defaultState = {
       coins: 0,
       clickPower: 1,
       autoClickPower: 0,
       level: 1,
       lastDailyReward: null,
       dailyStreak: 0,
+      referralsCount: 0,
+      userId: Math.random().toString(36).substring(2, 11),
       boosts: {
         clickMultiplier: { level: 0, cost: 50 },
         autoClicker: { level: 0, cost: 100 },
         passiveIncome: { level: 0, cost: 200 }
       }
     };
+    
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaultState,
+        ...parsed,
+        userId: parsed.userId || defaultState.userId,
+        referralsCount: parsed.referralsCount || 0
+      };
+    }
+    
+    return defaultState;
   });
 
   const [clickAnimation, setClickAnimation] = useState(false);
@@ -60,10 +76,59 @@ const Index = () => {
   const [boostTimeLeft, setBoostTimeLeft] = useState(0);
   const [adsgramController, setAdsgramController] = useState<any>(null);
   const [gamePaused, setGamePaused] = useState(false);
+  const [showReferralDialog, setShowReferralDialog] = useState(false);
+  const [referralLinkCopied, setReferralLinkCopied] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('clickerGame', JSON.stringify(gameState));
   }, [gameState]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refId = urlParams.get('ref');
+    
+    if (refId && refId !== gameState.userId) {
+      const hasClaimedRef = localStorage.getItem(`claimed_ref_${refId}`);
+      
+      if (!hasClaimedRef) {
+        localStorage.setItem(`claimed_ref_${refId}`, 'true');
+        
+        setGameState(prev => ({
+          ...prev,
+          coins: prev.coins + 1000
+        }));
+        
+        toast({
+          title: "🎉 Бонус за реферала!",
+          description: "Вы получили 1000 монет за переход по реферальной ссылке!",
+        });
+      }
+    }
+  }, []);
+
+  const getReferralLink = () => {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `https://t.me/ruble_rush_coin_bot?start=${gameState.userId}`;
+  };
+
+  const copyReferralLink = () => {
+    const link = getReferralLink();
+    navigator.clipboard.writeText(link).then(() => {
+      setReferralLinkCopied(true);
+      toast({
+        title: "✅ Скопировано!",
+        description: "Реферальная ссылка скопирована в буфер обмена",
+      });
+      setTimeout(() => setReferralLinkCopied(false), 3000);
+    });
+  };
+
+  const shareReferralLink = () => {
+    const link = getReferralLink();
+    const text = `🪙 Присоединяйся к RUBLE CLICKER и получи 1000 монет в подарок!`;
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+    window.open(telegramUrl, '_blank');
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).Adsgram) {
@@ -598,6 +663,64 @@ const Index = () => {
                 <p className="text-center text-sm">
                   <Icon name="Info" size={16} className="inline mr-1" />
                   Покупайте бусты в магазине для увеличения дохода
+                </p>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-br from-green-500/10 to-transparent border-green-500/20">
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-3">👥</div>
+                <h3 className="text-2xl font-bold mb-2">Приглашай друзей!</h3>
+                <p className="text-muted-foreground">Получай <span className="text-green-500 font-bold">1000 монет</span> за каждого друга</p>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-500/20 to-primary/20 rounded-lg p-4 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">Приглашено друзей:</span>
+                  <Badge variant="default" className="bg-green-500">
+                    <Icon name="Users" size={14} className="mr-1" />
+                    {gameState.referralsCount}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Заработано:</span>
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.png"
+                      alt="Coin"
+                      className="w-5 h-5 object-contain"
+                      draggable={false}
+                    />
+                    <span className="font-bold text-green-500">{gameState.referralsCount * 1000}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Button 
+                  onClick={shareReferralLink}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-green-500 to-primary hover:opacity-90"
+                >
+                  <Icon name="Share2" size={20} className="mr-2" />
+                  Поделиться ссылкой
+                </Button>
+                
+                <Button 
+                  onClick={copyReferralLink}
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                >
+                  <Icon name={referralLinkCopied ? "Check" : "Copy"} size={20} className="mr-2" />
+                  {referralLinkCopied ? "Скопировано!" : "Скопировать ссылку"}
+                </Button>
+              </div>
+
+              <div className="mt-4 p-3 bg-muted/20 rounded-lg">
+                <p className="text-xs text-center text-muted-foreground">
+                  <Icon name="Info" size={12} className="inline mr-1" />
+                  Ваш друг получит 1000 монет при первом входе по вашей ссылке
                 </p>
               </div>
             </Card>
