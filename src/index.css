@@ -55,6 +55,10 @@
   body {
     @apply bg-background text-foreground;
     font-family: "Rubik", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: pan-y;
+    overscroll-behavior: none;
   }
 
   h1,

@@ -128,7 +128,7 @@ const Index = () => {
     }
   }, [gameState.coins]);
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
     setGameState(prev => ({
       ...prev,
       coins: prev.coins + prev.clickPower
@@ -136,12 +136,23 @@ const Index = () => {
     setClickAnimation(true);
     setCoinPulse(true);
     
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+    
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let x, y;
+    
+    if ('touches' in e) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
     
     const newNumber = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       value: gameState.clickPower,
       x,
       y
@@ -209,57 +220,60 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/20 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/20 p-2 sm:p-4 pb-safe">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-6 text-center pt-6">
-          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mb-2">
+        <header className="mb-4 sm:mb-6 text-center pt-2 sm:pt-6">
+          <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mb-2">
             💰 RUBLE CLICKER
           </h1>
-          <p className="text-muted-foreground text-lg">Кликай, прокачивайся, зарабатывай!</p>
+          <p className="text-muted-foreground text-sm sm:text-lg">Кликай, прокачивайся, зарабатывай!</p>
         </header>
 
-        <Card className={`p-4 mb-6 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 border-2 ${coinPulse ? 'coin-pulse' : ''}`}>
+        <Card className={`p-3 sm:p-4 mb-4 sm:mb-6 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 border-2 ${coinPulse ? 'coin-pulse' : ''}`}>
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-2xl">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center text-xl sm:text-2xl">
                 🪙
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Ваш баланс</p>
-                <h2 className="text-3xl font-black text-foreground">{gameState.coins.toLocaleString()}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Ваш баланс</p>
+                <h2 className="text-2xl sm:text-3xl font-black text-foreground">{gameState.coins.toLocaleString()}</h2>
               </div>
             </div>
             <div className="text-right">
-              <Badge variant="outline" className="mb-2">
-                <Icon name="Flame" size={14} className="mr-1 text-accent" />
-                Серия: {gameState.dailyStreak}
+              <Badge variant="outline" className="mb-1 sm:mb-2 text-xs sm:text-sm">
+                <Icon name="Flame" size={12} className="mr-1 text-accent sm:w-3.5 sm:h-3.5" />
+                {gameState.dailyStreak}
               </Badge>
-              <p className="text-sm text-muted-foreground">Уровень {gameState.level}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Ур. {gameState.level}</p>
             </div>
           </div>
         </Card>
 
         <Tabs defaultValue="main" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="main" className="text-base">
-              <Icon name="Home" size={18} className="mr-2" />
-              Главная
+          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-auto">
+            <TabsTrigger value="main" className="text-xs sm:text-base py-2 sm:py-3 flex-col sm:flex-row gap-0.5 sm:gap-2">
+              <Icon name="Home" size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Главная</span>
+              <span className="sm:hidden">Дом</span>
             </TabsTrigger>
-            <TabsTrigger value="shop" className="text-base">
-              <Icon name="ShoppingCart" size={18} className="mr-2" />
-              Магазин
+            <TabsTrigger value="shop" className="text-xs sm:text-base py-2 sm:py-3 flex-col sm:flex-row gap-0.5 sm:gap-2">
+              <Icon name="ShoppingCart" size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Магазин</span>
+              <span className="sm:hidden">Топ</span>
             </TabsTrigger>
-            <TabsTrigger value="boosts" className="text-base">
-              <Icon name="Zap" size={18} className="mr-2" />
-              Бусты
+            <TabsTrigger value="boosts" className="text-xs sm:text-base py-2 sm:py-3 flex-col sm:flex-row gap-0.5 sm:gap-2">
+              <Icon name="Zap" size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span>Бусты</span>
             </TabsTrigger>
-            <TabsTrigger value="rewards" className="text-base">
-              <Icon name="Gift" size={18} className="mr-2" />
-              Награды
+            <TabsTrigger value="rewards" className="text-xs sm:text-base py-2 sm:py-3 flex-col sm:flex-row gap-0.5 sm:gap-2">
+              <Icon name="Gift" size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Награды</span>
+              <span className="sm:hidden">🎁</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="main" className="space-y-6">
+          <TabsContent value="main" className="space-y-4 sm:space-y-6">
             <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-2 border-primary/20">
               <div className="flex justify-between items-center mb-4">
                 <div>
@@ -287,25 +301,37 @@ const Index = () => {
               )}
             </Card>
 
-            <div className="flex justify-center relative">
+            <div className="flex justify-center relative touch-none select-none">
               <Button
                 onClick={handleClick}
+                onTouchStart={handleClick}
                 size="lg"
-                className={`w-80 h-80 rounded-full p-0 bg-transparent hover:scale-105 transition-all duration-200 border-0 shadow-2xl shadow-yellow-500/50 relative overflow-visible ${
+                className={`w-64 h-64 sm:w-80 sm:h-80 rounded-full p-0 bg-transparent active:scale-95 sm:hover:scale-105 transition-all duration-200 border-0 shadow-2xl shadow-yellow-500/50 relative overflow-visible ${
                   clickAnimation ? 'click-animation' : ''
                 }`}
-                style={{ background: 'transparent' }}
+                style={{ 
+                  background: 'transparent',
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation'
+                }}
               >
-                <img 
-                  src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.jpg"
-                  alt="Ruble Coin"
-                  className="w-full h-full object-contain drop-shadow-2xl"
-                  draggable={false}
-                />
+                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                  <img 
+                    src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.jpg"
+                    alt="Ruble Coin"
+                    className="w-[85%] h-[85%] object-contain drop-shadow-2xl"
+                    draggable={false}
+                    style={{
+                      clipPath: 'circle(45% at 50% 50%)',
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none'
+                    }}
+                  />
+                </div>
                 {floatingNumbers.map((num) => (
                   <span
                     key={num.id}
-                    className="absolute text-4xl font-black text-accent float-number pointer-events-none"
+                    className="absolute text-2xl sm:text-4xl font-black text-accent float-number pointer-events-none"
                     style={{
                       left: `${num.x}px`,
                       top: `${num.y}px`,
@@ -318,21 +344,21 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="p-4 text-center bg-gradient-to-br from-primary/10 to-transparent">
-                <Icon name="MousePointer" size={32} className="mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold">{gameState.clickPower}</p>
-                <p className="text-xs text-muted-foreground">Сила клика</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <Card className="p-2 sm:p-4 text-center bg-gradient-to-br from-primary/10 to-transparent">
+                <Icon name="MousePointer" size={24} className="mx-auto mb-1 sm:mb-2 text-primary sm:w-8 sm:h-8" />
+                <p className="text-lg sm:text-2xl font-bold">{gameState.clickPower}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Сила</p>
               </Card>
-              <Card className="p-4 text-center bg-gradient-to-br from-secondary/10 to-transparent">
-                <Icon name="Zap" size={32} className="mx-auto mb-2 text-secondary" />
-                <p className="text-2xl font-bold">{gameState.autoClickPower}</p>
-                <p className="text-xs text-muted-foreground">Доход/сек</p>
+              <Card className="p-2 sm:p-4 text-center bg-gradient-to-br from-secondary/10 to-transparent">
+                <Icon name="Zap" size={24} className="mx-auto mb-1 sm:mb-2 text-secondary sm:w-8 sm:h-8" />
+                <p className="text-lg sm:text-2xl font-bold">{gameState.autoClickPower}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Авто/сек</p>
               </Card>
-              <Card className="p-4 text-center bg-gradient-to-br from-accent/10 to-transparent">
-                <Icon name="Trophy" size={32} className="mx-auto mb-2 text-accent" />
-                <p className="text-2xl font-bold">{gameState.level}</p>
-                <p className="text-xs text-muted-foreground">Уровень</p>
+              <Card className="p-2 sm:p-4 text-center bg-gradient-to-br from-accent/10 to-transparent">
+                <Icon name="Trophy" size={24} className="mx-auto mb-1 sm:mb-2 text-accent sm:w-8 sm:h-8" />
+                <p className="text-lg sm:text-2xl font-bold">{gameState.level}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Уровень</p>
               </Card>
             </div>
           </TabsContent>
