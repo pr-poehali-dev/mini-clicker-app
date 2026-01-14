@@ -53,6 +53,7 @@ const Index = () => {
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [dailyRewardAmount, setDailyRewardAmount] = useState(0);
   const [coinPulse, setCoinPulse] = useState(false);
+  const [floatingNumbers, setFloatingNumbers] = useState<Array<{ id: number; value: number; x: number; y: number }>>([]);
 
   useEffect(() => {
     localStorage.setItem('clickerGame', JSON.stringify(gameState));
@@ -127,13 +128,31 @@ const Index = () => {
     }
   }, [gameState.coins]);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     setGameState(prev => ({
       ...prev,
       coins: prev.coins + prev.clickPower
     }));
     setClickAnimation(true);
     setCoinPulse(true);
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const newNumber = {
+      id: Date.now(),
+      value: gameState.clickPower,
+      x,
+      y
+    };
+    
+    setFloatingNumbers(prev => [...prev, newNumber]);
+    
+    setTimeout(() => {
+      setFloatingNumbers(prev => prev.filter(num => num.id !== newNumber.id));
+    }, 1000);
+    
     setTimeout(() => {
       setClickAnimation(false);
       setCoinPulse(false);
@@ -194,7 +213,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         <header className="mb-6 text-center pt-6">
           <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mb-2">
-            🪙 MEGA CLICKER
+            💰 RUBLE CLICKER
           </h1>
           <p className="text-muted-foreground text-lg">Кликай, прокачивайся, зарабатывай!</p>
         </header>
@@ -268,15 +287,34 @@ const Index = () => {
               )}
             </Card>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center relative">
               <Button
                 onClick={handleClick}
                 size="lg"
-                className={`w-64 h-64 rounded-full text-8xl bg-gradient-to-br from-primary via-secondary to-accent hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary/50 ${
+                className={`w-80 h-80 rounded-full p-0 bg-transparent hover:scale-105 transition-all duration-200 border-0 shadow-2xl shadow-yellow-500/50 relative overflow-visible ${
                   clickAnimation ? 'click-animation' : ''
                 }`}
+                style={{ background: 'transparent' }}
               >
-                🪙
+                <img 
+                  src="https://cdn.poehali.dev/files/rouble-coin-3d-icon-isolated-transparent-background_936869-2627.jpg"
+                  alt="Ruble Coin"
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                  draggable={false}
+                />
+                {floatingNumbers.map((num) => (
+                  <span
+                    key={num.id}
+                    className="absolute text-4xl font-black text-accent float-number pointer-events-none"
+                    style={{
+                      left: `${num.x}px`,
+                      top: `${num.y}px`,
+                      textShadow: '0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(251,146,60,0.5)'
+                    }}
+                  >
+                    +{num.value}
+                  </span>
+                ))}
               </Button>
             </div>
 

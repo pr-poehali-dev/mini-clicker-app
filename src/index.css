@@ -85,16 +85,74 @@
   }
 
   .click-animation {
-    animation: click-bounce 0.2s ease-out;
+    animation:
+      click-bounce 0.15s ease-out,
+      click-rotate 0.3s ease-out;
   }
 
   @keyframes click-bounce {
-    0%,
-    100% {
-      transform: scale(1);
+    0% {
+      transform: scale(1) rotate(0deg);
     }
     50% {
-      transform: scale(0.95);
+      transform: scale(0.9) rotate(-5deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  @keyframes click-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-10deg);
+    }
+    75% {
+      transform: rotate(10deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  .coin-shake {
+    animation: coin-shake 0.5s ease-in-out;
+  }
+
+  @keyframes coin-shake {
+    0%,
+    100% {
+      transform: translateX(0) rotate(0deg);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+      transform: translateX(-5px) rotate(-5deg);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+      transform: translateX(5px) rotate(5deg);
+    }
+  }
+
+  .float-number {
+    animation: float-up 1s ease-out forwards;
+  }
+
+  @keyframes float-up {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100px) scale(1.5);
     }
   }
 }
