@@ -781,6 +781,40 @@ const Index = () => {
               </div>
             </Card>
           </TabsContent>
+
+          <TabsContent value="wallet" className="flex-1 flex items-center justify-center">
+            <Card className="p-8 text-center bg-gradient-to-br from-card to-card/50">
+              <Icon name="Wallet" size={64} className="mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-2xl font-bold mb-2">Кошелек</h3>
+              <p className="text-lg text-muted-foreground">Coming Soon</p>
+            </Card>
+          </TabsContent>
+          <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
+            <div className="max-w-4xl mx-auto">
+              <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none">
+                <TabsTrigger value="main" className="flex-col gap-1 data-[state=active]:bg-primary/20">
+                  <Icon name="Home" size={20} />
+                  <span className="text-[10px]">Главная</span>
+                </TabsTrigger>
+                <TabsTrigger value="shop" className="flex-col gap-1 data-[state=active]:bg-primary/20">
+                  <Icon name="ShoppingCart" size={20} />
+                  <span className="text-[10px]">Магазин</span>
+                </TabsTrigger>
+                <TabsTrigger value="boosts" className="flex-col gap-1 data-[state=active]:bg-primary/20">
+                  <Icon name="Zap" size={20} />
+                  <span className="text-[10px]">Бусты</span>
+                </TabsTrigger>
+                <TabsTrigger value="rewards" className="flex-col gap-1 data-[state=active]:bg-primary/20">
+                  <Icon name="Gift" size={20} />
+                  <span className="text-[10px]">Награды</span>
+                </TabsTrigger>
+                <TabsTrigger value="wallet" className="flex-col gap-1 data-[state=active]:bg-primary/20">
+                  <Icon name="Wallet" size={20} />
+                  <span className="text-[10px]">Кошелек</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
         </Tabs>
 
         {rocketVisible && (
@@ -850,42 +884,6 @@ const Index = () => {
             </DialogHeader>
           </DialogContent>
         </Dialog>
-
-          <TabsContent value="wallet" className="flex-1 flex items-center justify-center">
-            <Card className="p-8 text-center bg-gradient-to-br from-card to-card/50">
-              <Icon name="Wallet" size={64} className="mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-2xl font-bold mb-2">Кошелек</h3>
-              <p className="text-lg text-muted-foreground">Coming Soon</p>
-            </Card>
-          </TabsContent>
-
-          <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
-            <div className="max-w-4xl mx-auto">
-              <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none">
-                <TabsTrigger value="main" className="flex-col gap-1 data-[state=active]:bg-primary/20">
-                  <Icon name="Home" size={20} />
-                  <span className="text-[10px]">Главная</span>
-                </TabsTrigger>
-                <TabsTrigger value="shop" className="flex-col gap-1 data-[state=active]:bg-primary/20">
-                  <Icon name="ShoppingCart" size={20} />
-                  <span className="text-[10px]">Магазин</span>
-                </TabsTrigger>
-                <TabsTrigger value="boosts" className="flex-col gap-1 data-[state=active]:bg-primary/20">
-                  <Icon name="Zap" size={20} />
-                  <span className="text-[10px]">Бусты</span>
-                </TabsTrigger>
-                <TabsTrigger value="rewards" className="flex-col gap-1 data-[state=active]:bg-primary/20">
-                  <Icon name="Gift" size={20} />
-                  <span className="text-[10px]">Награды</span>
-                </TabsTrigger>
-                <TabsTrigger value="wallet" className="flex-col gap-1 data-[state=active]:bg-primary/20">
-                  <Icon name="Wallet" size={20} />
-                  <span className="text-[10px]">Кошелек</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
-        </Tabs>
       </div>
     </div>
   );
